@@ -1,0 +1,9 @@
+<?php
+
+/* Settings for CAS via NitroXy.com */
+
+$cas_config = array(
+	'site' => "nitroxy.torandi.com",
+	'port' => 443,
+	'uri' => "cas"
+);
