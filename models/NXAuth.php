@@ -13,7 +13,7 @@ class NXAuth {
 	 * @param $repo_root 
 	 * @param $config 
 	 */
-	public static init($config) {
+	public static function init($config) {
 		phpCAS::client(CAS_VERSION_2_0, $config['site'], $config['port'], "cas");
 
 		static::$config = $config;
@@ -30,19 +30,19 @@ class NXAuth {
 		static::$extra_path = $config['site']. "/cas/extra";
 	}
 
-	public static authenticate() {
+	public static function authenticate() {
 		phpCAS::forceAuthentication();
 	}
 
-	public static logout() {
+	public static function logout() {
 		phpCAS::logout();
 	}
 
-	public static is_authenticated() {
+	public static function is_authenticated() {
 		return phpCAS::isAuthenticated();
 	}
 
-	public static user() {
+	public static function user() {
 		if(static::is_authenticated()) {
 			return new NXUser();
 		} else return null;
