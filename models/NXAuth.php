@@ -4,11 +4,12 @@ class NXAuth {
 
 	private static $private_key = null; /* Cert for getting extra data */
 	private static $config = null;
-	private static $extra_path = null;
+	private static $url = null;
 
 	private static $ca_cert = null;
 
 	private static $user = null;
+	private static $api_model = null;
 
 
 	/**
@@ -27,7 +28,7 @@ class NXAuth {
 			if(phpCAS::hasAttribute('sequence_token')) {
 				$_SESSION['sequence_token'] = phpCAS::getAttribute('sequence_token');
 			} else if(static::$config['key_id']) {
-				throw new Exception("key_id set, but no sequence_token was recieved. Is the api key still valid?");
+				throw new NXAuthError("key_id set, but no sequence_token was recieved. Is the api key still valid?");
 			}
 		});
 
@@ -45,10 +46,10 @@ class NXAuth {
 			phpCAS::setNoCasServerValidation();
 		}
 
-		static::$extra_path = $config['site']. "/cas/extra";
+		static::$url = $config['site']. "/cas";
 	}
 
-	public static function authenticate() {
+	public static function login() {
 		phpCAS::forceAuthentication();
 	}
 
@@ -60,6 +61,13 @@ class NXAuth {
 		return phpCAS::isAuthenticated();
 	}
 
+	/**
+	 * Get a model containing data for the current user
+	 * 
+	 * This method is singletone'd so calling it multiple times is no performace hit
+	 *
+	 * @return NXUser instance or null if not authenticated
+	 */
 	public static function user() {
 		if(static::is_authenticated()) {
 			if(static::$user == null) static::$user = new NXUser();
@@ -67,9 +75,15 @@ class NXAuth {
 		} else return null;
 	}
 
-	public static function request_data($options) {
+
+
+	/**
+	 * Method used by NXAPI
+	 */
+	public static function request_data($func, $options) {
 		$request = new CAS_Request_CurlRequest();
 
+		$options['ticket'] = static::ticket();
 		$options['sequence_token'] = static::sequence_token();
 
 		$request_data = base64_encode(http_build_query($options));
@@ -81,7 +95,7 @@ class NXAuth {
 			'signature' => $signature,
 		);
 
-		$request->setUrl(static::$extra_path . "?" . http_build_query($params));
+		$request->setUrl(static::$url . "/api/$func?" . http_build_query($params));
 		if(static::$ca_cert) {
 			$request->setSslCaCert(static::$ca_cert, true);
 		}
@@ -92,17 +106,17 @@ class NXAuth {
 
 		if($request->send()) {
 			$body = $request->getResponseBody();
-			return $body;
 			$ret = json_decode($body);
 			if(isset($ret['sequence_token'])) {
 				static::set_sequence_token($ret['sequence_token']);
 			}
+			return $ret;
 		} else {
 			throw new NXAuthError("Failed to request extra data: ". $request->getErrorMessage());
 		}
 	}
 
-	public static function sign($data) {
+	private static function sign($data) {
 		if(static::$private_key == null) throw new NXAuthError("Private key required to get extra data");
 
 		$signature = null;
@@ -114,11 +128,19 @@ class NXAuth {
 	}
 
 	private static function sequence_token() {
-		$ret = $_SESSION['next_session_token']++;
+		$ret = $_SESSION['sequence_token']++;
 	}
 
 	private static function set_sequence_token($token) {
-		$_SESSION['next_session_token'] = $token;
+		$_SESSION['sequence_token'] = $token;
+	}
+
+	private static function ticket() {
+		if(static::is_authenticated()) {
+			return $_COOKIE['PHPSESSID'];
+		} else {
+			return null;
+		}
 	}
 }
 
