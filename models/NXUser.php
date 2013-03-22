@@ -8,6 +8,7 @@ class NXUser {
 		$this->attr = phpCAS::getAttributes();
 		$this->ticket = $_COOKIE['PHPSESSID'];
 		$this->attr['username'] = phpCAS::getUser();
+		unset($this->attr['sequence_token']);
 	}
 
 	public function __get($attr) {

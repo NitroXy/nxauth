@@ -8,6 +8,8 @@ class NXAuth {
 
 	private static $ca_cert = null;
 
+	private static $user = null;
+
 
 	/**
 	 * Initialize the class, this must be called before anything else
@@ -16,6 +18,18 @@ class NXAuth {
 	 */
 	public static function init($config) {
 		phpCAS::client(CAS_VERSION_2_0, $config['site'], $config['port'], "cas");
+
+		if(isset($config['key_id'])) {
+			phpCAS::setServerServiceValidateURL($config['site'] . "/cas/serviceValidate/{$config['key_id']}");
+		}
+
+		phpCAS::setPostAuthenticateCallback(function($logout_token) {
+			if(phpCAS::hasAttribute('sequence_token')) {
+				$_SESSION['sequence_token'] = phpCAS::getAttribute('sequence_token');
+			} else if(static::$config['key_id']) {
+				throw new Exception("key_id set, but no sequence_token was recieved. Is the api key still valid?");
+			}
+		});
 
 		static::$config = $config;
 
@@ -48,12 +62,15 @@ class NXAuth {
 
 	public static function user() {
 		if(static::is_authenticated()) {
-			return new NXUser();
+			if(static::$user == null) static::$user = new NXUser();
+			return static::$user;
 		} else return null;
 	}
 
 	public static function request_data($options) {
 		$request = new CAS_Request_CurlRequest();
+
+		$options['sequence_token'] = static::sequence_token();
 
 		$request_data = base64_encode(http_build_query($options));
 
@@ -62,7 +79,6 @@ class NXAuth {
 		$params = array(
 			'data' => $request_data,
 			'signature' => $signature,
-			'site' => static::$config['site_id']
 		);
 
 		$request->setUrl(static::$extra_path . "?" . http_build_query($params));
@@ -77,7 +93,10 @@ class NXAuth {
 		if($request->send()) {
 			$body = $request->getResponseBody();
 			return $body;
-			return json_decode($body);
+			$ret = json_decode($body);
+			if(isset($ret['sequence_token'])) {
+				static::set_sequence_token($ret['sequence_token']);
+			}
 		} else {
 			throw new NXAuthError("Failed to request extra data: ". $request->getErrorMessage());
 		}
@@ -92,6 +111,14 @@ class NXAuth {
 		} else {
 			throw new NXAuthError("Failed to sign data");
 		}
+	}
+
+	private static function sequence_token() {
+		$ret = $_SESSION['next_session_token']++;
+	}
+
+	private static function set_sequence_token($token) {
+		$_SESSION['next_session_token'] = $token;
 	}
 }
 
