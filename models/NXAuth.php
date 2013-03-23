@@ -14,8 +14,8 @@ class NXAuth {
 
 	/**
 	 * Initialize the class, this must be called before anything else
-	 * @param $repo_root 
-	 * @param $config 
+	 * @param $repo_root
+	 * @param $config
 	 */
 	public static function init($config) {
 		phpCAS::client(CAS_VERSION_2_0, $config['site'], $config['port'], "cas");
@@ -37,6 +37,9 @@ class NXAuth {
 		if(isset($config['private_key'])) {
 			$key = $config['private_key'];
 			static::$private_key = openssl_get_privatekey("file:///$key");
+			if(static::$private_key === false) {
+				throw new NXAuthError("Failed to open private key $key");
+			}
 		}
 
 		if(isset($config['ca_cert']) && $config['ca_cert'] != null) {
@@ -63,7 +66,7 @@ class NXAuth {
 
 	/**
 	 * Get a model containing data for the current user
-	 * 
+	 *
 	 * This method is singletone'd so calling it multiple times is no performace hit
 	 *
 	 * @return NXUser instance or null if not authenticated
@@ -75,8 +78,6 @@ class NXAuth {
 		} else return null;
 	}
 
-
-
 	/**
 	 * Method used by NXAPI
 	 */
@@ -86,7 +87,7 @@ class NXAuth {
 		$options['ticket'] = static::ticket();
 		$options['sequence_token'] = static::sequence_token();
 
-		$request_data = base64_encode(http_build_query($options));
+		$request_data = base64_encode(json_encode($options));
 
 		$signature = static::sign($request_data);
 
@@ -107,8 +108,9 @@ class NXAuth {
 		if($request->send()) {
 			$body = $request->getResponseBody();
 			$ret = json_decode($body);
-			if(isset($ret['sequence_token'])) {
-				static::set_sequence_token($ret['sequence_token']);
+			var_dump($body);
+			if(isset($ret->sequence_token)) {
+				static::set_sequence_token($ret->sequence_token);
 			}
 			return $ret;
 		} else {
@@ -128,7 +130,7 @@ class NXAuth {
 	}
 
 	private static function sequence_token() {
-		$ret = $_SESSION['sequence_token']++;
+		return $_SESSION['sequence_token']++;
 	}
 
 	private static function set_sequence_token($token) {
@@ -144,7 +146,7 @@ class NXAuth {
 	}
 }
 
-class NXAuthError {
+class NXAuthError extends Exception {
 	public function __construct($str) {
 		parent::__construct($str);
 	}
