@@ -32,8 +32,6 @@ echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 		<p><a href="logout.php">Logga ut</a></p>
 		<h1>User</h1>
 		<?php dump(NXAuth::user()); ?>
-		<h1>Session</h1>
-		<?php dump($_SESSION) ?>
 		<h1>Functions</h1>
 <?php
 foreach($functions as $f => $args) {
