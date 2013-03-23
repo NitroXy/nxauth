@@ -108,7 +108,6 @@ class NXAuth {
 		if($request->send()) {
 			$body = $request->getResponseBody();
 			$ret = json_decode($body);
-			var_dump($body);
 			if(isset($ret->sequence_token)) {
 				static::set_sequence_token($ret->sequence_token);
 			}
