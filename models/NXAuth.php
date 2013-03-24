@@ -49,7 +49,7 @@ class NXAuth {
 			phpCAS::setNoCasServerValidation();
 		}
 
-		static::$url = $config['site']. "/cas";
+		static::$url = "https://" . $config['site']. "/cas";
 	}
 
 	public static function login() {
