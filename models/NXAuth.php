@@ -21,7 +21,7 @@ class NXAuth {
 		phpCAS::client(CAS_VERSION_2_0, $config['site'], $config['port'], "cas");
 
 		if(isset($config['key_id'])) {
-			phpCAS::setServerServiceValidateURL($config['site'] . "/cas/serviceValidate/{$config['key_id']}");
+			phpCAS::setServerServiceValidateURL("https://". $config['site'] . "/cas/serviceValidate/{$config['key_id']}");
 		}
 
 		phpCAS::setPostAuthenticateCallback(function($logout_token) {
