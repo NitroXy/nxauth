@@ -56,8 +56,13 @@ class NXAuth {
 		phpCAS::forceAuthentication();
 	}
 
-	public static function logout() {
-		phpCAS::logout();
+	public static function logout($return_uri = null) {
+		$options = "";
+
+		$host = $_SERVER['HTTPS'] ? "https://" : "http://" . $_SERVER['HTTP_HOST'] ;
+
+		if($return_uri) $options = array('service' => "$host/$return_uri");
+		phpCAS::logout($options);
 	}
 
 	public static function is_authenticated() {
