@@ -12,14 +12,16 @@ function dump($data) {
 	echo "</pre>\n";
 }
 
+$user = NXAuth::user();
+
 $functions = array(
-	'groups' => null, /* null is expanded to array(array()) */
-	'rights' => null,
-	'has_right' => array('right' => 'handle_api_accesses'),
-	'crew_groups' => null,
-	'events' => null,
-	'event_info' => null,
-	'is_crew' => null
+	'groups' => array('user' => $user->id),
+	'rights' => array('user' => $user->id),
+	'has_right' => array('user' => $user->id, 'right' => 'handle_api_accesses'),
+	'crew_groups' => array('user' => $user->id),
+	'is_crew' => array('user' => $user->id),
+	'events' => null,/* null is expanded to array(array()) */
+	'event_info' => null
 );
 
 echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
