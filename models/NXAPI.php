@@ -112,15 +112,18 @@ class NXAPIError extends Exception {
 	const MISSING_CONFIGURATION = 6;
 
 	public $type;
-	public $body = "";
+	public $body;
 
-	public function __construct($type, $msg, $body = "") {
+	public function __construct($type, $msg, $body = null) {
 		parent::__construct($msg);
 		$this->type = $type;
 		$this->body = $body;
+		if($this->body != null) {
+			$this->message .= "\nServer response: " . $this->body;
+		}
 	}
 
 	public function __toString() {
-		return __CLASS__ . ": " . $this->message . "\nServer response: " . $this->body;
+		return __CLASS__ . ": " . $this->getMessage();
 	}
 }
