@@ -16,24 +16,26 @@ class NXAPI {
 	public static function __callStatic($func, $arguments) {
 
 		if(static::$private_key == null) {
-			throw new NXAPIError("No API key found, can't use API");
+			throw new NXAPIError(NXAPIError::MISSING_CONFIGURATION, "No API key found, can't use API");
 		} else if(static::$key_id == null) {
-			throw new NXAPIError("No API key id found, can't use API");
+			throw new NXAPIError(NXAPIError::MISSING_CONFIGURATION, "No API key id found, can't use API");
 		} else {
 			$options = isset($arguments[0]) ? $arguments[0] : array();
 
 			for($try=0; $try < 2; ++$try) {
-				$data = NXAPI::request_data(array('function' => $func, 'arguments' => $options));
+				list($data, $body) = NXAPI::request_data(array('function' => $func, 'arguments' => $options));
 				if(!$data) {
-					throw new NXAPIError("NXAPI: Got null");
+					throw new NXAPIError(NXAPIError::GOT_NULL, "NXAPI: Got null", $body);
 				}
 				if($data->status == "SEQERR") {
 				} else break;
 			}
 			if($data->status == "OK") {
 				return $data->data;
+			} else if($data->status == "SEQERR") {
+				throw new NXAPIError(NXAPIError::SEQUENCE_ERROR, $data->message, $body);
 			} else {
-				throw new NXAPIError($data->message);
+				throw new NXAPIError(NXAPIError::SERVER_ERROR, $data->message, $body);
 			}
 		}
 	}
@@ -74,20 +76,20 @@ class NXAPI {
 			if(isset($ret->sequence_token)) {
 				static::set_sequence_token($ret->sequence_token);
 			}
-			return $ret;
+			return array($ret, $body);
 		} else {
-			throw new NXAuthError("Failed to request extra data: ". $request->getErrorMessage());
+			throw new NXAPIError(NXAPIError::REQUEST_FAILED, "Failed to request extra data: ". $request->getErrorMessage());
 		}
 	}
 
 	private static function sign($data) {
-		if(static::$private_key == null) throw new NXAuthError("Private key required to get extra data");
+		if(static::$private_key == null) throw new NXAPIError(NXAPIError::MISSING_CONFIGURATION, "Private key required to get extra data");
 
 		$signature = null;
 		if(openssl_sign($data, $signature, static::$private_key)) {
 			return base64_encode($signature);
 		} else {
-			throw new NXAuthError("Failed to sign data");
+			throw new NXAPIError(NXAPIError::SIGN_FAILED, "Failed to sign data");
 		}
 	}
 
@@ -102,7 +104,23 @@ class NXAPI {
 }
 
 class NXAPIError extends Exception {
-	public function __construct($msg) {
+	const SEQUENCE_ERROR = 1;
+	const SERVER_ERROR = 2;
+	const GOT_NULL = 3;
+	const REQUEST_FAILED = 4;
+	const SIGN_FAILED = 5;
+	const MISSING_CONFIGURATION = 6;
+
+	public $type;
+	public $body = "";
+
+	public function __construct($type, $msg, $body = "") {
 		parent::__construct($msg);
+		$this->type = $type;
+		$this->body = $body;
+	}
+
+	public function __toString() {
+		return __CLASS__ . ": " . $this->message . "\nServer response: " . $this->body;
 	}
 }
