@@ -17,7 +17,7 @@ class NXAuth {
 	public static function init($config) {
 		phpCAS::client(CAS_VERSION_2_0, $config['site'], $config['port'], "cas");
 
-		static::$config = $config;
+		self::$config = $config;
 
 		$private_key = null;
 
@@ -31,7 +31,7 @@ class NXAuth {
 
 		if(isset($config['ca_cert']) && $config['ca_cert'] != null) {
 			phpCAS::setCasServerCACert($config['ca_cert']);
-			static::$ca_cert = $config['ca_cert'];
+			self::$ca_cert = $config['ca_cert'];
 		} else {
 			phpCAS::setNoCasServerValidation();
 		}
@@ -40,7 +40,7 @@ class NXAuth {
 			'private_key' => $private_key,
 			'key_id' => $config['key_id'],
 			'url' => "https://" . $config['site'],
-			'ca_cert' => static::$ca_cert
+			'ca_cert' => self::$ca_cert
 		));
 
 	}
@@ -56,6 +56,7 @@ class NXAuth {
 
 		if($return_uri !== null) $options = array('service' => "$host/$return_uri");
 		phpCAS::logout($options);
+		NXAPI::clear_cache();
 	}
 
 	public static function is_authenticated() {
@@ -70,9 +71,9 @@ class NXAuth {
 	 * @return NXUser instance or null if not authenticated
 	 */
 	public static function user() {
-		if(static::is_authenticated()) {
-			if(static::$user == null) static::$user = new NXUser();
-			return static::$user;
+		if(self::is_authenticated()) {
+			if(self::$user == null) self::$user = new NXUser();
+			return self::$user;
 		} else return null;
 	}
 }

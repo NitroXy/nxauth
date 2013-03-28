@@ -7,20 +7,31 @@ class NXAPI {
 	private static $ca_cert = null;
 
 	public static function init($config) {
-		static::$private_key = $config['private_key'];
-		static::$key_id = $config['key_id'];
-		static::$url = $config['url'];
-		static::$ca_cert = $config['ca_cert'];
+		self::$private_key = $config['private_key'];
+		self::$key_id = $config['key_id'];
+		self::$url = $config['url'];
+		self::$ca_cert = $config['ca_cert'];
+		if(!isset($_SESSION['nxapi_cache'])) {
+			$_SESSION['nxapi_cache'] = array();
+		}
+	}
+
+	public static function clear_cache() {
+		$_SESSION['nxapi_cache'] = array();
 	}
 
 	public static function __callStatic($func, $arguments) {
-
-		if(static::$private_key == null) {
+		if(self::$private_key == null) {
 			throw new NXAPIError(NXAPIError::MISSING_CONFIGURATION, "No API key found, can't use API");
-		} else if(static::$key_id == null) {
+		} else if(self::$key_id == null) {
 			throw new NXAPIError(NXAPIError::MISSING_CONFIGURATION, "No API key id found, can't use API");
 		} else {
 			$options = isset($arguments[0]) ? $arguments[0] : array();
+			$cache_string = self::cache_string($func, $options);
+
+			if(isset($_SESSION['nxapi_cache'][$cache_string])) {
+				return $_SESSION['nxapi_cache'][$cache_string];
+			}
 
 			for($try=0; $try < 2; ++$try) {
 				list($data, $body) = NXAPI::request_data(array('function' => $func, 'arguments' => $options));
@@ -31,6 +42,7 @@ class NXAPI {
 				} else break;
 			}
 			if($data->status == "OK") {
+				$_SESSION['nxapi_cache'][$cache_string] = $data->data;
 				return $data->data;
 			} else if($data->status == "SEQERR") {
 				throw new NXAPIError(NXAPIError::SEQUENCE_ERROR, $data->message, $body);
@@ -40,6 +52,26 @@ class NXAPI {
 		}
 	}
 
+
+	private static function build_array_string($options) {
+		$str = "";
+		foreach($options as $k => $v) {
+			$str .= "$k:";
+			if(is_array($v)) {
+				$str .= self::build_array_string($v);
+			} else {
+				$str .= $v;
+			}
+			$str .= ",";
+		}
+		return "{$str}";
+	}
+
+	private static function cache_string($func, $options) {
+		$option_str = self::build_array_string($options);
+		return "$func($option_str)";
+	}
+
 	/**
 	 * @param $call array of function calls
 	 */
@@ -47,23 +79,23 @@ class NXAPI {
 		$request = new CAS_Request_CurlRequest();
 
 		$options = array(
-			'sequence_token' => static::sequence_token(),
+			'sequence_token' => self::sequence_token(),
 			'call' => $call
 		);
 
 		$request_data = base64_encode(json_encode($options));
 
-		$signature = static::sign($request_data);
+		$signature = self::sign($request_data);
 
 		$params = array(
 			'data' => $request_data,
 			'signature' => $signature,
-			'key' => static::$key_id
+			'key' => self::$key_id
 		);
 
-		$request->setUrl(static::$url . "/api?" . http_build_query($params));
-		if(static::$ca_cert) {
-			$request->setSslCaCert(static::$ca_cert, true);
+		$request->setUrl(self::$url . "/api?" . http_build_query($params));
+		if(self::$ca_cert) {
+			$request->setSslCaCert(self::$ca_cert, true);
 		}
 
 		$request->addHeader("pragma: no-cache");
@@ -74,7 +106,7 @@ class NXAPI {
 			$body = $request->getResponseBody();
 			$ret = json_decode($body);
 			if(isset($ret->sequence_token)) {
-				static::set_sequence_token($ret->sequence_token);
+				self::set_sequence_token($ret->sequence_token);
 			}
 			return array($ret, $body);
 		} else {
@@ -83,10 +115,10 @@ class NXAPI {
 	}
 
 	private static function sign($data) {
-		if(static::$private_key == null) throw new NXAPIError(NXAPIError::MISSING_CONFIGURATION, "Private key required to get extra data");
+		if(self::$private_key == null) throw new NXAPIError(NXAPIError::MISSING_CONFIGURATION, "Private key required to get extra data");
 
 		$signature = null;
-		if(openssl_sign($data, $signature, static::$private_key)) {
+		if(openssl_sign($data, $signature, self::$private_key)) {
 			return base64_encode($signature);
 		} else {
 			throw new NXAPIError(NXAPIError::SIGN_FAILED, "Failed to sign data");

@@ -19,3 +19,8 @@ require_once "libs/nxauth/include.php";
 	NXAuth::init($cas_config);
 
 }
+
+/* Include local user config */
+if(file_exists("$dir/nxauth.local.php")) {
+	require_once "$dir/nxauth.local.php";
+}
