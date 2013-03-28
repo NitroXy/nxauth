@@ -49,12 +49,12 @@ class NXAuth {
 		phpCAS::forceAuthentication();
 	}
 
-	public static function logout($return_uri = null) {
+	public static function logout($return_uri = "") {
 		$options = "";
 
 		$host = $_SERVER['HTTPS'] ? "https://" : "http://" . $_SERVER['HTTP_HOST'] ;
 
-		if($return_uri) $options = array('service' => "$host/$return_uri");
+		if($return_uri !== null) $options = array('service' => "$host/$return_uri");
 		phpCAS::logout($options);
 	}
 
