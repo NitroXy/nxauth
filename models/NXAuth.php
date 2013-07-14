@@ -8,6 +8,11 @@ class NXAuth {
 
 	private static $user = null;
 
+	private static function resolve_filename($filename){
+		global $nxauth_root;
+		if ( $filename[0] == '/' ) return $filename;        /* absolute path */
+		return $nxauth_root . '/' . $filename;              /* relative to api folder */
+	}
 
 	/**
 	 * Initialize the class, this must be called before anything else
@@ -22,7 +27,7 @@ class NXAuth {
 		$private_key = null;
 
 		if(isset($config['private_key'])) {
-			$key = $config['private_key'];
+			$key = static::resolve_filename($config['private_key']);
 			$private_key = openssl_get_privatekey("file:///$key");
 			if($private_key === false) {
 				throw new NXAuthError("Failed to open private key $key");
@@ -30,8 +35,8 @@ class NXAuth {
 		}
 
 		if(isset($config['ca_cert']) && $config['ca_cert'] != null) {
-			phpCAS::setCasServerCACert($config['ca_cert']);
-			self::$ca_cert = $config['ca_cert'];
+			self::$ca_cert = static::resolve_filename($config['ca_cert']);
+			phpCAS::setCasServerCACert(self::$ca_cert);
 		} else {
 			phpCAS::setNoCasServerValidation();
 		}
