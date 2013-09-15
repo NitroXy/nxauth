@@ -11,7 +11,11 @@ class NXAuth {
 	private static function resolve_filename($filename){
 		global $nxauth_root;
 		if ( $filename[0] == '/' ) return $filename;        /* absolute path */
-		return $nxauth_root . '/' . $filename;              /* relative to api folder */
+		$real_path = $nxauth_root . '/' . $filename;              /* relative to api folder */
+		if(!is_readable($real_path)) {
+			throw new NXAuthError("Could not open $real_path for reading, check that it exists and are readable by the webserver");
+		}
+		return $real_path;
 	}
 
 	/**
