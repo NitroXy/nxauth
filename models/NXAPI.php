@@ -6,6 +6,8 @@ class NXAPI {
 	private static $url = null;
 	private static $ca_cert = null;
 
+	private static $curl_options = array();
+
 	public static function init($config) {
 		self::$private_key = $config['private_key'];
 		self::$key_id = $config['key_id'];
@@ -13,6 +15,11 @@ class NXAPI {
 		self::$ca_cert = $config['ca_cert'];
 		if(!isset($_SESSION['nxapi_cache'])) {
 			$_SESSION['nxapi_cache'] = array();
+		}
+
+		if(self::$ca_cert == null) {
+			$curl_options[CURLOPT_SSL_VERIFYHOST] = 0;
+			$curl_options[CURLOPT_SSL_VERIFYPEER] = 0;
 		}
 	}
 
@@ -77,6 +84,10 @@ class NXAPI {
 	 */
 	private static function request_data($call) {
 		$request = new CAS_Request_CurlRequest();
+
+		if(count(self::$curl_options) > 0) {
+			$request->setCurlOptions(self::$curl_options);
+		}
 
 		$options = array(
 			'sequence_token' => self::sequence_token(),

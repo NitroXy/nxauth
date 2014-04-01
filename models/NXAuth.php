@@ -46,6 +46,9 @@ class NXAuth {
 			phpCAS::setCasServerCACert(self::$ca_cert);
 		} else {
 			phpCAS::setNoCasServerValidation();
+			// Disable curl ssl verification
+			phpCAS::setExtraCurlOption(CURLOPT_SSL_VERIFYHOST, 0);
+			phpCAS::setExtraCurlOption(CURLOPT_SSL_VERIFYPEER, 0);
 		}
 
 		NXAPI::init(array(
