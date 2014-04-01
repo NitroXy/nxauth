@@ -20,11 +20,14 @@ class NXAuth {
 
 	/**
 	 * Initialize the class, this must be called before anything else
-	 * @param $repo_root
 	 * @param $config
+	 * @param bool $changeSessionID Allow phpCAS to change the session_id (Single Sign Out/handleLogoutRequests is based on that change)
+	 * @param $debugLog Set to a path to enable debug log
 	 */
-	public static function init($config) {
-		phpCAS::client(CAS_VERSION_2_0, $config['site'], $config['port'], "cas");
+	public static function init($config, $changeSessionID = true, $debugLog = null) {
+		if($debugLog != null) phpCAS::setDebug($debugLog);
+
+		phpCAS::client(CAS_VERSION_2_0, $config['site'], $config['port'], "cas", $changeSessionID);
 
 		self::$config = $config;
 
@@ -61,9 +64,10 @@ class NXAuth {
 	public static function logout($return_uri = "") {
 		$options = "";
 
-		$host = $_SERVER['HTTPS'] ? "https://" : "http://" . $_SERVER['HTTP_HOST'] ;
+		$host = ($_SERVER['HTTPS'] ? "https://" : "http://" . $_SERVER['HTTP_HOST']) . "/";
+		if(strpos($return_uri, "http") == 0) $host = "";
 
-		if($return_uri !== null) $options = array('service' => "$host/$return_uri");
+		if($return_uri !== null) $options = array('service' => "$host$return_uri");
 		phpCAS::logout($options);
 		NXAPI::clear_cache();
 	}
