@@ -18,8 +18,8 @@ class NXAPI {
 		}
 
 		if(self::$ca_cert == null) {
-			$curl_options[CURLOPT_SSL_VERIFYHOST] = 0;
-			$curl_options[CURLOPT_SSL_VERIFYPEER] = 0;
+			self::$curl_options[CURLOPT_SSL_VERIFYHOST] = 0;
+			self::$curl_options[CURLOPT_SSL_VERIFYPEER] = 0;
 		}
 	}
 
