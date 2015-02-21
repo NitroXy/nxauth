@@ -1,0 +1,11 @@
+{
+    "name": "nitroxy/nxauth",
+    "description": "A module for authenticating with NitroXys CAS-service",
+    "authors": [
+        {
+            "name": "Andreas Tarandi",
+            "email": "torandi@gmail.com"
+        }
+    ],
+    "require": {}
+}

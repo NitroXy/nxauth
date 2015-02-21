@@ -3,3 +3,6 @@
 .\#*
 .console_history
 *.priv
+
+# Vendor directory handled by composer
+/vendor/
