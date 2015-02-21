@@ -7,7 +7,7 @@ require_once "../include.php";
 	/* Settings for CAS via NitroXy.com */
 
 	$cas_config = array(
-		'site' => "nx.dev",
+		'site' => "nitroxy.com",
 		'port' => 443,
 		'key_id' => "nxauth",
 		'private_key' => dirname(__FILE__)."/nxauth.priv",
