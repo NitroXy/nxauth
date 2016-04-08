@@ -46,6 +46,4 @@ foreach($functions as $f => $args) {
 } catch (Exception $e) {
 	echo "<pre>Error: {$e}:\n";
 	$e->getTraceAsString();
-	echo "------------------\n";
-	var_dump($e);
 }
