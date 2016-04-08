@@ -7,6 +7,9 @@
             "email": "torandi@gmail.com"
         }
     ],
+    "autoload": {
+        "classmap": ["models/"]
+    },
     "require": {
         "jasig/phpcas": "^1.3"
     }
