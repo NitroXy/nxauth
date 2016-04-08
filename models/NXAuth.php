@@ -65,12 +65,16 @@ class NXAuth {
 	}
 
 	public static function logout($return_uri = "") {
-		$options = "";
+		$options = ""; /* default value in phpCAS */
 
-		$host = ($_SERVER['HTTPS'] ? "https://" : "http://" . $_SERVER['HTTP_HOST']) . "/";
-		if(strpos($return_uri, "http") == 0) $host = "";
+		$host = (!empty($_SERVER['HTTPS']) ? "https://" : "http://" . $_SERVER['HTTP_HOST']) . '/';
+		if (strpos($return_uri, "http") === 0) $host = "";
 
-		if($return_uri !== null) $options = array('service' => "$host$return_uri");
+		if ($return_uri !== null){
+			$return_uri = trim($return_uri, '/');
+			$options = array('service' => "{$host}{$return_uri}");
+		}
+
 		phpCAS::logout($options);
 		NXAPI::clear_cache();
 	}
