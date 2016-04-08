@@ -7,5 +7,7 @@
             "email": "torandi@gmail.com"
         }
     ],
-    "require": {}
+    "require": {
+        "jasig/phpcas": "^1.3"
+    }
 }
