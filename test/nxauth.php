@@ -2,6 +2,8 @@
 
 require_once "../include.php";
 
+$base_url = dirname($_SERVER['REQUEST_URI']);
+
 {
 
 	/* Settings for CAS via NitroXy.com */

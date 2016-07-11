@@ -4,8 +4,6 @@ try {
 
 include "nxauth.php";
 
-NXAuth::login();
-
 function dump($data) {
 	echo "<pre>\n";
 	var_dump($data);
@@ -13,40 +11,50 @@ function dump($data) {
 }
 
 $user = NXAuth::user();
+$functions = [];
 
-$functions = array(
-	'groups' => array('user' => $user->id),
-	'rights' => array('user' => $user->id),
-	'has_right' => array('user' => $user->id, 'right' => 'handle_api_accesses'),
-	'crew_groups' => array('user' => $user->id),
-	'is_crew' => array('user' => $user->id),
-	'events' => null,/* null is expanded to array(array()) */
-	'event_info' => null
-);
+if ( $user ){
+	$functions = [
+		'groups' => ['user' => $user->id],
+		'rights' => ['user' => $user->id],
+		'has_right' => ['user' => $user->id, 'right' => 'handle_api_accesses'],
+		'crew_groups' => ['user' => $user->id],
+		'is_crew' => ['user' => $user->id],
+		'events' => null,/* null is expanded to array(array()) */
+		'event_info' => null,
+	];
+}
 
-echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 		<title>NXAuth Test</title>
 	</head>
 	<body>
-		<p><a href="logout.php">Logga ut</a></p>
-		<h1>User</h1>
-		<?php dump(NXAuth::user()); ?>
-		<h1>Functions</h1>
+		<h1>NXAuth Test</h1>
+		<?php if ( $user ): ?>
+			<form action="logout.php" method="get">
+				<button type="submit">Logout</button>
+			</form>
+			<h2>User</h2>
+			<?php dump(NXAuth::user()); ?>
+			<h2>Functions</h2>
+			<?php foreach($functions as $f => $args): ?>
+				<?php if($args === null) $args = array(); ?>
+				<h3><?=$f?></h3>
+				<?php dump(NXAPI::$f($args)); ?>
+			<?php endforeach; ?>
+		<?php else: ?>
+			<form action="login.php" method="get">
+				<button type="submit">Login</button>
+			</form>
+		<?php endif; ?>
+	</body>
+</html>
 <?php
-foreach($functions as $f => $args) {
-	if($args === null) $args = array();
-	echo "<h2>$f</h2>\n";
-	dump(NXAPI::$f($args));
-}
-
 } catch (Exception $e) {
 	echo "<pre>Error: {$e}:\n";
 	$e->getTraceAsString();
-	echo "------------------\n";
-	var_dump($e);
 }

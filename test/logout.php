@@ -2,4 +2,4 @@
 
 include "nxauth.php";
 
-NXAuth::logout("/nxauth/test");
+NXAuth::logout($base_url);
